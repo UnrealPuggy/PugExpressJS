@@ -1,0 +1,1 @@
+deno run -NR --watch mod.ts

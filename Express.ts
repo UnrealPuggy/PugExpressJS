@@ -17,10 +17,15 @@ export class Express {
 	 * @returns
 	 */
 	matchPath(pathToMath: string, path: string) {
-		const newPath = new RegExp(`^${path.replaceAll('*', '(.*)')}$`);
+		const newPath = new RegExp(
+			`^${path
+				.replaceAll('*', '(.*)')
+				// .replaceAll(/:([a-zA-Z]+)\?/g, '([^/]+)?')
+				.replaceAll(/:([a-zA-Z]+)/g, '([^/]+)')}$`
+		);
 		const match = pathToMath.match(newPath);
 		// console.log('Match');
-		return { args: match?.slice(1) ?? [], suceed: pathToMath == path };
+		return { args: match?.slice(1) ?? [], suceed: match != null };
 		// return match;
 	}
 	listen(port: number, options?: Deno.ServeTcpOptions) {
@@ -29,9 +34,9 @@ export class Express {
 			const pathname = url.pathname;
 			// Method Stuff
 			const methodRoutes = this.routes[req.method as HTTPMethod] ?? [];
-			for (let route of methodRoutes) {
+			for (const route of methodRoutes) {
 				const match = this.matchPath(pathname, route.path);
-				if (methodRoutes && route) {
+				if (methodRoutes && route && match.suceed) {
 					const callback = route.handler(
 						{ url, pathname, req },
 						...match.args
