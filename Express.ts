@@ -1,4 +1,6 @@
-type RouteHandler = (req?: Request) => Response | void;
+export type ExpressRequest = { req: Request; pathname: string; url: URL };
+
+type RouteHandler = (req: ExpressRequest, ...args: string[]) => Response | void;
 type HTTPMethod = 'GET' | 'POST' | 'PUT';
 type Route = { path: string; handler: RouteHandler };
 export class Express {
@@ -15,22 +17,29 @@ export class Express {
 	 * @returns
 	 */
 	matchPath(pathToMath: string, path: string) {
-		return pathToMath == path;
+		const newPath = new RegExp(`^${path.replaceAll('*', '(.*)')}$`);
+		const match = pathToMath.match(newPath);
+		// console.log('Match');
+		return { args: match?.slice(1) ?? [], suceed: pathToMath == path };
+		// return match;
 	}
 	listen(port: number, options?: Deno.ServeTcpOptions) {
 		return Deno.serve({ port, ...options }, (req) => {
 			const url = new URL(req.url);
 			const pathname = url.pathname;
-
 			// Method Stuff
 			const methodRoutes = this.routes[req.method as HTTPMethod] ?? [];
-			const foundRoute = methodRoutes.find((route) =>
-				this.matchPath(pathname, route.path)
-			);
-			if (methodRoutes && foundRoute) {
-				const callback = foundRoute.handler(req);
-				if (callback) return callback;
+			for (let route of methodRoutes) {
+				const match = this.matchPath(pathname, route.path);
+				if (methodRoutes && route) {
+					const callback = route.handler(
+						{ url, pathname, req },
+						...match.args
+					);
+					if (callback) return callback;
+				}
 			}
+
 			return new Response('Not Found', {
 				status: 404,
 				headers: { 'Content-Type': 'text/plain' },
