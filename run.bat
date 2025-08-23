@@ -1,1 +1,1 @@
-deno run -NR --watch mod.ts
+deno run -NRE --allow-run --watch mod.ts

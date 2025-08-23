@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "esbuild": "npm:esbuild@^0.25.9"
+  }
+}
