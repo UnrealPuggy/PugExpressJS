@@ -3,7 +3,7 @@ import { existsSync } from './fs.ts';
 import * as esbuild from 'esbuild';
 const app = new Express();
 
-app.get('/api', (req, res) => {
+app.get('/api', (_, res) => {
 	return res.text('api');
 });
 
