@@ -1,5 +1,6 @@
 {
   "imports": {
-    "esbuild": "npm:esbuild@^0.25.9"
+    "esbuild": "npm:esbuild@^0.25.9",
+    "jquery": "npm:jquery@^3.7.1"
   }
 }

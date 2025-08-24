@@ -51,8 +51,6 @@ export class Express {
 			paramNames.map((key, i) => [key, match?.slice(1)?.[i] ?? ''])
 		);
 
-		// console.log(obj);
-		// console.log('Match');
 		return { args: obj, suceed: match != null };
 		// return match;
 	}

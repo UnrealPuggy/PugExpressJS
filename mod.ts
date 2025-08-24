@@ -3,12 +3,20 @@ import { existsSync } from './fs.ts';
 import * as esbuild from 'esbuild';
 const app = new Express();
 
-app.get('/users/:id', (ctx, res) => res.text(`User ${ctx.params.id}`));
-app.post('/users', (_, res) => res.text('Create user'));
-app.put('/users/:id', (ctx, res) => res.text(`Update ${ctx.params.id}`));
-app.delete('/users/:id', (ctx, res) => res.text(`Delete ${ctx.params.id}`));
+app.get('/api', (req, res) => {
+	return res.text('api');
+});
+
+app.get('/api/:pug', (req, res) => {
+	const params = req.params as { pug: string };
+	return res.text('I like turtles, also pug: ' + params.pug);
+});
+// app.get('/users/:id', (ctx, res) => res.text(`User ${ctx.params.id}`));
+// app.post('/users', (_, res) => res.text('Create user'));
+// app.put('/users/:id', (ctx, res) => res.text(`Update ${ctx.params.id}`));
+// app.delete('/users/:id', (ctx, res) => res.text(`Delete ${ctx.params.id}`));
 app.get('/*', (req, res) => {
-	console.log(req.params, res);
+	// console.log(req.params, res);
 
 	if (req.pathname == '/') {
 		return res.send(Deno.readFileSync('app/index.html'));
@@ -34,6 +42,8 @@ app.get('/*', (req, res) => {
 			.header('Content-Type', 'text/javascript')
 			.send(transpiles.code);
 	}
+	if (req.pathname.endsWith('.js'))
+		res.header('Content-Type', 'text/javascript');
 	if (existsSync(filePath)) return res.send(Deno.readFileSync(filePath));
 });
 app.listen(8000);
