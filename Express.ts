@@ -5,7 +5,11 @@ export type ExpressRequest = {
 	params: Record<string, string>;
 };
 
-type RouteHandler = (req: ExpressRequest, res: Res) => Response | void;
+type RouteHandler = (
+	req: ExpressRequest,
+	res: Res,
+	next: () => void
+) => Response | void;
 type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
 type Route = { path: string; handler: RouteHandler };
 export class Express {
@@ -26,6 +30,10 @@ export class Express {
 		this.routes.DELETE ??= [];
 		this.routes.DELETE.push({ path, handler });
 	}
+	// use(handler: RouteHandler) {
+	// 	this.routes.USE ??= [];
+	// 	this.routes.USE.push({ handler, path: '*' });
+	// }
 
 	/**
 	 * @description Matches the first argument against the second.
@@ -61,18 +69,28 @@ export class Express {
 			const res = new Res();
 			// Method Stuff
 			const methodRoutes = this.routes[req.method as HTTPMethod] ?? [];
+
 			for (const route of methodRoutes) {
 				const match = this.matchPath(pathname, route.path);
 				if (methodRoutes && route && match.suceed) {
-					const callback = route.handler(
+					let c = false;
+					const next = () => {
+						c = true;
+					};
+					const _callback = route.handler(
 						{ url, pathname, req, params: match.args },
-						res
+						res,
+						next
 					);
-					if (callback) return callback;
-					break;
+
+					if (!c) break;
+
+					// if (callback) return callback;
+					// break;
 				}
 			}
-			return res.status(404).text('Not Found');
+			return res.toResponse();
+			// return res.status(404).text('Not Found');
 			// return new Response('Not Found', {
 			// status: 404,
 			// headers: { 'Content-Type': 'text/plain' },
@@ -81,11 +99,11 @@ export class Express {
 	}
 }
 export class Res {
-	statusCode: number = 200;
 	headers: Headers = new Headers();
-
+	resInit: ResponseInit = { status: 200 };
+	bodyInit: BodyInit | null = null;
 	status(code: number) {
-		this.statusCode = code;
+		this.resInit.status = code;
 		return this;
 	}
 
@@ -93,34 +111,26 @@ export class Res {
 		this.headers.set(key, value);
 		return this;
 	}
-	send(data: BodyInit | null) {
-		return new Response(data, {
-			status: this.statusCode,
-			headers: this.headers,
-		});
+	send(data: BodyInit | null, resinit = this.resInit) {
+		this.bodyInit = data;
+		this.resInit = resinit;
 	}
-	json(data: unknown) {
+	json(data: object) {
 		this.header('Content-Type', 'application/json');
-		return new Response(JSON.stringify(data), {
-			status: this.statusCode,
-			headers: this.headers,
-		});
+		// this.resInit.status
+		this.bodyInit = JSON.stringify(data);
 	}
 
 	text(message: string) {
 		this.header('Content-Type', 'text/plain');
-		return new Response(message, {
-			status: this.statusCode,
-			headers: this.headers,
-		});
+		this.bodyInit = message;
 	}
 	redirect(url: string, code = 302) {
-		this.statusCode = code;
+		this.resInit.status = code;
 		this.headers.set('Location', url);
-		// You can send a small message or empty body
-		return new Response(`Redirecting to ${url}`, {
-			status: this.statusCode,
-			headers: this.headers,
-		});
+		this.bodyInit = `Redirecting to ${url}`;
+	}
+	toResponse(): Response {
+		return new Response(this.bodyInit, this.resInit);
 	}
 }
