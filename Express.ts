@@ -11,24 +11,25 @@ type RouteHandler = (
 	next: () => void
 ) => Response | void;
 type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
-type Route = { path: string; handler: RouteHandler };
+type Route = {
+	method: HTTPMethod | 'USE';
+	path?: string;
+	handler: RouteHandler;
+};
 export class Express {
-	private routes: Partial<Record<HTTPMethod, Route[]>> = {};
+	private routes: Route[] = [];
 	get(path: string, handler: RouteHandler): void {
-		this.routes.GET ??= [];
-		this.routes.GET.push({ path, handler });
+		// this.routes.GET ??= [];
+		this.routes.push({ method: 'GET', path, handler });
 	}
 	post(path: string, handler: RouteHandler): void {
-		this.routes.POST ??= [];
-		this.routes.POST.push({ path, handler });
+		this.routes.push({ method: 'POST', path, handler });
 	}
 	put(path: string, handler: RouteHandler): void {
-		this.routes.PUT ??= [];
-		this.routes.PUT.push({ path, handler });
+		this.routes.push({ method: 'PUT', path, handler });
 	}
 	delete(path: string, handler: RouteHandler): void {
-		this.routes.DELETE ??= [];
-		this.routes.DELETE.push({ path, handler });
+		this.routes.push({ method: 'DELETE', path, handler });
 	}
 	// use(handler: RouteHandler) {
 	// 	this.routes.USE ??= [];
@@ -68,25 +69,38 @@ export class Express {
 			const pathname = url.pathname;
 			const res = new Res();
 			// Method Stuff
-			const methodRoutes = this.routes[req.method as HTTPMethod] ?? [];
+			// const methodRoutes = this.routes[req.method as HTTPMethod] ?? [];
+
+			const methodRoutes = this.routes.filter(
+				(e) => e.method == req.method || e.method == 'USE'
+			);
 
 			for (const route of methodRoutes) {
-				const match = this.matchPath(pathname, route.path);
-				if (methodRoutes && route && match.suceed) {
-					let c = false;
-					const next = () => {
-						c = true;
-					};
-					const _callback = route.handler(
-						{ url, pathname, req, params: match.args },
+				let c = false;
+				const next = () => {
+					c = true;
+				};
+				if (route.method == 'USE') {
+					route.handler(
+						{ url, pathname, req, params: {} },
 						res,
 						next
 					);
-
 					if (!c) break;
+				} else {
+					const match = this.matchPath(pathname, route.path!);
+					if (match.suceed) {
+						const _callback = route.handler(
+							{ url, pathname, req, params: match.args },
+							res,
+							next
+						);
+						console.log(res.bodyInit);
+						if (!c) break;
 
-					// if (callback) return callback;
-					// break;
+						// if (callback) return callback;
+						// break;
+					}
 				}
 			}
 			return res.toResponse();

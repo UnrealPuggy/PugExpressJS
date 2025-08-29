@@ -16,6 +16,7 @@ app.get('/*', (req, res) => {
 	// console.log(req.params, res);
 	if (req.pathname == '/') {
 		res.send(Deno.readFileSync('app/index.html'));
+		return;
 		// return new Response(Deno.readFileSync('app/index.html'));
 	}
 	const filePath = 'app' + req.pathname;
