@@ -33,7 +33,7 @@ app.get('/*', (req, res) => {
 		}
 		const transpiles = esbuild.transformSync(
 			Deno.readTextFileSync(filePath),
-			{ loader: 'ts', minify: true }
+			{ loader: 'ts' }
 		);
 		return res
 			.header('Content-Type', 'text/javascript')
@@ -46,6 +46,7 @@ app.get('/*', (req, res) => {
 		res.status(404).text('404 - File not found');
 	}
 });
+
 // app.get('/users/:id', (ctx, res) => res.text(`User ${ctx.params.id}`));
 // app.post('/users', (_, res) => res.text('Create user'));
 // app.put('/users/:id', (ctx, res) => res.text(`Update ${ctx.params.id}`));
