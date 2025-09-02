@@ -33,12 +33,14 @@ app.get('/*', (req, res) => {
 		}
 		const transpiles = esbuild.transformSync(
 			Deno.readTextFileSync(filePath),
-			{ loader: 'ts' }
+			{ loader: 'ts', minify: true }
 		);
-		res.header('Content-Type', 'text/javascript').send(transpiles.code);
+		return res
+			.header('Content-Type', 'text/javascript')
+			.send(transpiles.code);
 	}
 	if (req.pathname.endsWith('.js'))
-		res.header('Content-Type', 'text/javascript');
+		return res.header('Content-Type', 'text/javascript');
 	if (existsSync(filePath)) res.send(Deno.readFileSync(filePath));
 	else {
 		res.status(404).text('404 - File not found');

@@ -9,7 +9,7 @@ type RouteHandler = (
 	req: ExpressRequest,
 	res: Res,
 	next: () => void
-) => Response | void;
+) => Res | void;
 type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
 type Route = {
 	method: HTTPMethod | 'USE';
@@ -95,7 +95,7 @@ export class Express {
 							res,
 							next
 						);
-						console.log(res.bodyInit);
+						// console.log(res.bodyInit);
 						if (!c) break;
 
 						// if (callback) return callback;
@@ -145,6 +145,9 @@ export class Res {
 		this.bodyInit = `Redirecting to ${url}`;
 	}
 	toResponse(): Response {
-		return new Response(this.bodyInit, this.resInit);
+		return new Response(this.bodyInit, {
+			headers: this.headers,
+			...this.resInit,
+		});
 	}
 }
